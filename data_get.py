@@ -5,6 +5,7 @@ from math import ceil
 import numpy as np
 from  os import path
 
+#takes minute frmat and converts to seconds
 def seconds(x):
     periods = x['period']*12*60
     cur = datetime.datetime.strptime(x['pctimestring'], "%M:%S") - datetime.datetime(1900,1,1)
@@ -12,6 +13,7 @@ def seconds(x):
         return -1 * cur.total_seconds()
     return cur.total_seconds() + periods
 
+#finds "possessions" down (ie. 3 points down is -1 and 7 points up is 3+)
 def find_pos(x):
     n =   ceil(x/3)
     if n > 5:
@@ -20,6 +22,7 @@ def find_pos(x):
         n = 5
     return n
 
+#count possessions in a shift
 def count_pos(x, t):
     last = x.iloc[0,:]['event_team']
     n = 0
@@ -45,25 +48,33 @@ def count_pos(x, t):
 
 
 
-for i in range(973, 1230):
+for i in range(1230):
 
-    g_id = 21900001 + i
+    g_id = 21700001 + i
 
+    #if i havent already got data for the game
     if not path.exists("games/game_{}.csv".format(g_id)):
 
+
         n = ns.scrape_game([g_id])
+        #get time left
         n['timeLeft'] = n.apply(seconds, axis=1)
+        #if the movement is made by home team
         n['isHome'] = n.apply(lambda x: 1 if x['home_team_abbrev'] == x['event_team'] else 0,axis=1)
+
+        #get home points and away points
         n['h_points_made'] = n.apply(lambda x: x['points_made'] if x['home_team_abbrev'] == x['event_team'] else 0, axis=1)
         n['a_points_made'] = n.apply(lambda x: x['points_made'] if x['away_team_abbrev'] == x['event_team'] else 0, axis=1)
         n['h_points'] = n['h_points_made'].cumsum()
         n['a_points'] = n['a_points_made'].cumsum()
 
+        #calculate point differential from each perspective
         n['h_point_dif'] = n.apply(lambda x: x['h_points'] - x['a_points'], axis=1)
         n['a_point_dif'] = n.apply(lambda x: x['a_points'] - x['h_points'], axis=1)
         n = n[(n['event_type_de'] != 'jump-ball')&(n['event_type_de'] != 'period-end')]
 
-
+        #find the times when a player might switch off the court
+        n = n.reset_index()
         subs = n[(n['event_type_de'] == 'period_start')|(n['event_type_de'] == 'substitution')].index.tolist()
 
 
@@ -128,8 +139,15 @@ for i in range(973, 1230):
                                          'offence2','offence3','offence4','offence5','defence1','defence2',
                                          'defence3','defence4','defence5'])
 
-            all_shifts.append(home_info)
-            all_shifts.append(away_info)
+
+            if pos_passed_h != 0:
+                if np.isnan(Y_h):
+                    print(shift)
+                all_shifts.append(home_info)
+            if pos_passed_a != 0:
+                if np.isnan(Y_a):
+                    print(shift)
+                all_shifts.append(away_info)
 
         game_shifts = pd.concat(all_shifts, axis=1).transpose()
 

@@ -1,7 +1,7 @@
 import pandas as pd
 
 for i in range(5):
-    year = (215 + i)*100000 + 1
+    year = (219 - i)*100000 + 1
 
     shifts_in_y = []
 
@@ -14,4 +14,4 @@ for i in range(5):
         except:
             print(g_id)
     y = pd.concat(shifts_in_y)
-    y.to_csv('season_{}.csv'.format(15+i))
+    y.to_csv('season_{}.csv'.format(19-i))
