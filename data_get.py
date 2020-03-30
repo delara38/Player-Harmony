@@ -50,7 +50,7 @@ def count_pos(x, t):
 
 for i in range(1230):
 
-    g_id = 21700001 + i
+    g_id = 21500001 + i
 
     #if i havent already got data for the game
     if not path.exists("games/game_{}.csv".format(g_id)):
